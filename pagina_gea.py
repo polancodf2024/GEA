@@ -71,7 +71,7 @@ def main():
     # Logo y encabezado minimalista
     col1, col2 = st.columns([1, 3])
     with col1:
-        st.image("https://www.cardiologia.org.mx/images/logo_smc.png", width=100)
+        st.image("escudo_COLOR.jpg", width=100)
     with col2:
         st.title("OASIS")
         st.caption("Observatorio de Avances en Genética de la Enfermedad Aterosclerótica")
@@ -101,7 +101,7 @@ def main():
         st.markdown('<div class="card">', unsafe_allow_html=True)
         
         # Proyecto GEA con histograma
-        st.markdown('<p class="proyecto-header">📊 PROYECTO GEA: Cifras</p>', unsafe_allow_html=True)
+        st.markdown('<p class="proyecto-header">📊 Proyecto GEA en cifras</p>', unsafe_allow_html=True)
         
         # Datos para el histograma
         datos_productos = pd.DataFrame({
@@ -141,7 +141,7 @@ def main():
         st.markdown("""
         <div class="proyecto-item">🔍 <strong>REGISTRO MEX-AMI</strong>: Caracterización del infarto agudo en población mexicana</div>
         <div class="proyecto-item">💻 <strong>PLATAFORMA DIGITAL</strong>: Herramientas para investigación multicéntrica</div>
-        <div class="proyecto-item">📊 <strong>PROYECTO GEA</strong>: Actualización de numeralia</div>
+        <div class="proyecto-item">📊 <strong>PROYECTO GEA</strong>: Actualización numeralia</div>
         """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
