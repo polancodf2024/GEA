@@ -1,0 +1,6 @@
+streamlit
+toml
+Pillow
+paramiko
+scp
+python-dotenv
