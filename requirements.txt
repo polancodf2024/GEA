@@ -4,3 +4,4 @@ Pillow
 paramiko
 scp
 python-dotenv
+streamlit-option-menu>=0.3.0
