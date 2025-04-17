@@ -4,4 +4,5 @@ Pillow
 paramiko
 scp
 python-dotenv
+plotly
 streamlit-option-menu>=0.3.0
