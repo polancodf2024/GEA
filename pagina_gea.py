@@ -4,9 +4,66 @@ import plotly.express as px
 from PIL import Image
 import os
 from pathlib import Path
+import paramiko
+import toml
 
 def main():
-    # Configuración de la página
+    # ===== FUNCIONES DE ACCESO REMOTO =====
+    def cargar_configuracion():
+        """Carga la configuración desde secrets.toml"""
+        try:
+            config = dict(st.secrets)
+            if config.get('remote_host'):
+                return config
+        except:
+            try:
+                secrets_path = Path('.streamlit') / 'secrets.toml'
+                with open(secrets_path, 'r') as f:
+                    return toml.load(f)
+            except Exception as e:
+                st.error(f"Error de configuración: {e}")
+                return None
+
+    def contar_registros_remotos():
+        """Obtiene el conteo de registros desde el servidor remoto usando nombres de archivos desde secrets"""
+        config = cargar_configuracion()
+        if not config:
+            return None
+
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                hostname=config['remote_host'],
+                port=config['remote_port'],
+                username=config['remote_user'],
+                password=config['remote_password']
+            )
+
+            # Usamos los nombres de archivo definidos en secrets.toml
+            archivos = {
+                "Artículos": config['remote_file_art'],
+                "Tesis": config['remote_file_tes'],
+                "Congresos": config['remote_file_con'],
+                "Financiamientos": config['remote_file_fin']
+            }
+
+            resultados = []
+            for nombre, archivo in archivos.items():
+                comando = f"if [ -f {config['remote_dir']}/{archivo} ]; then wc -l {config['remote_dir']}/{archivo} | awk '{{print $1}}'; else echo 0; fi"
+                stdin, stdout, stderr = ssh.exec_command(comando)
+                output = stdout.read().decode().strip()
+                count = int(output) if output else 0
+                resultados.append({"Tipo": nombre, "Registros": count})
+
+            ssh.close()
+            return pd.DataFrame(resultados)
+
+        except Exception as e:
+            st.error(f"Conexión fallida: {str(e)}")
+            return None
+
+    # ===== CONFIGURACIÓN DE PÁGINA =====
     st.set_page_config(
         page_title="GEA - Genética de la Enfermedad Aterosclerótica",
         layout="centered",
@@ -40,26 +97,25 @@ def main():
         .value-icon {{ margin-right: 0.5rem; font-size: 1.2em; }}
         .methodology-img {{ margin: 1.5rem 0; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
         .file-uploader {{ margin: 1rem 0; padding: 1rem; border: 2px dashed {color_guinda}; border-radius: 8px; text-align: center; }}
+        .stats-table {{ margin: 1rem 0; font-size: 0.9em; }}
     </style>
     """, unsafe_allow_html=True)
 
-    # Función mejorada para cargar imágenes con verificación robusta
+    # Función para cargar imágenes
     def load_image_with_fallback(main_path, alternative_names):
-        """Versión mejorada con verificación exhaustiva y manejo de errores"""
         paths_to_try = [main_path] + alternative_names
-        
         for img_path in paths_to_try:
             try:
                 if os.path.exists(img_path):
                     img = Image.open(img_path)
-                    img.verify()  # Verifica integridad del archivo
-                    img = Image.open(img_path)  # Necesario reabrir después de verify
+                    img.verify()
+                    img = Image.open(img_path)
                     return img, None
-            except (IOError, SyntaxError, Exception) as e:
+            except (IOError, SyntaxError, Exception):
                 continue
-                
-        return None, f"No se encontró una imagen válida. Intentó con: {', '.join(paths_to_try)}"
+        return None, f"No se encontró imagen válida en: {', '.join(paths_to_try)}"
 
+    # ===== INTERFAZ PRINCIPAL =====
     # Encabezado con logos
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -83,6 +139,73 @@ def main():
 
     st.markdown("---")
 
+    # ===== ESTADÍSTICAS REMOTAS =====
+    with st.expander("📈 Estadísticas de Registros", expanded=False):
+        st.markdown("""
+        <div class="card">
+            <h3 style="color: #6a0f1a; margin-bottom: 0.5rem;">Registros almacenados</h3>
+            <div class="stats-table">
+        """, unsafe_allow_html=True)
+        
+        df_stats = contar_registros_remotos()
+        if df_stats is not None:
+            st.table(df_stats.assign(hack='').set_index('hack'))
+            total = df_stats['Registros'].sum()
+            st.markdown(f"""
+            <div style="margin-top: 0.5rem; font-weight: bold; text-align: right;">
+                Total registros: <span style="color: #6a0f1a;">{total}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.warning("No se pudo conectar al servidor remoto")
+        
+        st.markdown("</div></div>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+
+    # ===== HISTOGRAMA DINÁMICO =====
+    with st.container():
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📊 Distribución de Registros")
+        
+        df_stats = contar_registros_remotos()
+        
+        if df_stats is not None:
+            # Creamos el gráfico con los datos reales
+            fig = px.bar(df_stats, x='Tipo', y='Registros',
+                         title="Registros por categoría",
+                         color='Tipo',
+                         color_discrete_sequence=[color_guinda, color_marrón, color_verde_pardo, "#4B3621"],
+                         text='Registros',
+                         labels={'Tipo': 'Categoría', 'Registros': 'Número de Registros'})
+            
+            fig.update_traces(textposition='outside', 
+                             marker_line_color='rgb(8,48,107)',
+                             marker_line_width=1.5)
+            fig.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis_title=None,
+                yaxis_title="Cantidad de Registros",
+                showlegend=False,
+                hovermode="x unified"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Estadísticas resumidas
+            total_registros = df_stats['Registros'].sum()
+            st.markdown(f"""
+            **Resumen estadístico:**
+            - Total registros: **{total_registros}**
+            - Categoría con más registros: **{df_stats.loc[df_stats['Registros'].idxmax(), 'Tipo']}** ({df_stats['Registros'].max()})
+            - Categoría con menos registros: **{df_stats.loc[df_stats['Registros'].idxmin(), 'Tipo']}** ({df_stats['Registros'].min()})
+            """)
+        else:
+            st.warning("No se pudieron cargar los datos para el histograma")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ===== SECCIONES DE CONTENIDO =====
     # Sección de Identidad Institucional
     with st.container():
         st.header("Identidad Institucional")
@@ -99,11 +222,10 @@ def main():
             herramientas diagnósticas innovadoras y medicina traslacional para reducir la incidencia de enfermedades cardiovasculares."*
             """)
 
-    # Sección de Metodología con manejo robusto de imágenes
+    # Sección de Metodología
     with st.container():
         st.header("🔍 Metodología del Estudio GEA")
         
-        # Intento de carga de imagen con múltiples alternativas
         img, error = load_image_with_fallback(
             main_path="UTF-8IMG-20250417-WA0004.jpg",
             alternative_names=[
@@ -119,13 +241,11 @@ def main():
             try:
                 st.image(
                     img, 
-                    caption="Flujo metodológico del estudio GEA: población, análisis y componentes", 
-                    use_container_width=True,
-                    output_format="auto"
+                    caption="Flujo metodológico del estudio GEA", 
+                    use_container_width=True
                 )
-                
                 st.markdown("""
-                **Componentes principales del estudio:**
+                **Componentes principales:**
                 - Población mexicana con evaluación integral
                 - Análisis bioquímicos y antropométricos
                 - Estudios de imagenología cardiovascular
@@ -134,22 +254,18 @@ def main():
                 """)
             except Exception as e:
                 st.error(f"Error al mostrar la imagen: {str(e)}")
-                st.warning("Por favor verifica que el archivo de imagen no esté corrupto")
         else:
             st.warning(error)
-            
-            # Opción de subir la imagen manualmente
             st.markdown('<div class="file-uploader">', unsafe_allow_html=True)
-            uploaded_file = st.file_uploader("Sube aquí el diagrama de metodología", type=["jpg", "jpeg", "png"])
+            uploaded_file = st.file_uploader("Sube diagrama de metodología", type=["jpg", "jpeg", "png"])
             st.markdown('</div>', unsafe_allow_html=True)
             
             if uploaded_file:
                 try:
                     img = Image.open(uploaded_file)
                     st.image(img, use_container_width=True)
-                    st.success("¡Imagen cargada correctamente!")
                 except Exception as e:
-                    st.error(f"Error al procesar la imagen subida: {str(e)}")
+                    st.error(f"Error al procesar imagen: {str(e)}")
 
     # Valores y Servicios
     col_valores, col_servicios = st.columns(2)
@@ -206,47 +322,35 @@ def main():
             """)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # Datos del proyecto
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("📊 Proyecto GEA en cifras")
-        
-        datos_gea = pd.DataFrame({
-            'Área': ['Artículos científicos', 'Tesis', 'Congresos', 'Financiamientos'],
-            'Total': [124, 15, 6, 5]
-        })
-        
-        fig = px.bar(datos_gea, x='Área', y='Total',
-                     title="Datos clave del estudio (2025)",
-                     color_discrete_sequence=[color_verde_pardo],
-                     text='Total')
-        
-        fig.update_traces(textposition='outside')
-        fig.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            xaxis_title=None,
-            yaxis_title="Cantidad",
-            showlegend=False
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("""
-        **Características únicas:**
-        - 2,740 participantes mexicanos
-        - 256 marcadores de ancestría
-        - Protocolo integrado (genética + imagenología)
-        """)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # Responsables
+    # Responsables (versión minimalista)
+    st.markdown("---")
     st.markdown("""
-    <div class="responsables">
-        <strong>Responsables:</strong><br>
-        Dra. Rosalinda Posadas Sánchez<br>
-        Dr. Gilberto Vargas Alarcón
+    <div style="text-align: center; margin: 1.5rem 0;">
+        <h3 style="color: #6a0f1a; margin-bottom: 0.5rem;">Responsables</h3>
+        <p style="margin: 0.25rem 0;">Dra. Rosalinda Posadas Sánchez</p>
+        <p style="margin: 0.25rem 0;">Dr. Gilberto Vargas Alarcón</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # Sección de Contacto
+    st.markdown("---")
+    with st.container():
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📬 Contacto")
+        st.markdown("""
+        <div style="margin: 1rem 0; line-height: 1.6;">
+            <p style="margin-bottom: 0.5rem;">Para más información sobre el estudio GEA:</p>
+            <div style="background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0;">
+                <p style="margin: 0;"><strong>Dra. Rosalinda Posadas Sánchez</strong><br>
+                <small>rosalinda.posadas@cardiologia.org.mx</small></p>
+            </div>
+            <div style="background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0;">
+                <p style="margin: 0;"><strong>Dr. Gilberto Vargas Alarcón</strong><br>
+                <small>gilberto.vargas@cardiologia.org.mx</small></p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Pie de página
     st.markdown("---")
