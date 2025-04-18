@@ -6,14 +6,14 @@ import os
 from pathlib import Path
 
 def main():
-    # Configuración minimalista de la página
+    # Configuración de la página
     st.set_page_config(
         page_title="GEA - Genética de la Enfermedad Aterosclerótica",
         layout="centered",
         page_icon="🧬"
     )
 
-    # Paleta de colores oficiales
+    # Paleta de colores
     color_guinda = "#6a0f1a"
     color_marrón = "#8B4513"
     color_verde_pardo = "#6B8E23"
@@ -22,109 +22,43 @@ def main():
     # CSS personalizado
     st.markdown(f"""
     <style>
-        body {{
-            font-family: 'Arial', sans-serif;
-        }}
-        .stApp {{
-            background-color: {color_fondo};
-            max-width: 900px;
-            margin: 0 auto;
-        }}
-        h1 {{
-            color: {color_guinda};
-            border-bottom: 2px solid {color_marrón};
-            padding-bottom: 8px;
-        }}
-        h2 {{
-            color: {color_guinda};
-            font-size: 1.3em;
-        }}
-        .footer {{
-            background-color: {color_guinda};
-            color: white;
-            padding: 1rem;
-            margin-top: 3rem;
-            text-align: center;
-            border-radius: 4px;
-        }}
-        .logo-container {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }}
-        .logo-item {{
-            flex: 1;
-            display: flex;
-            align-items: center;
-        }}
-        .logo-item.left {{
-            justify-content: flex-start;
-        }}
-        .logo-item.right {{
-            justify-content: flex-end;
-        }}
-        .title-wrapper {{
-            flex: 2;
-            text-align: center;
-        }}
-        .responsables {{
-            margin-top: 1rem;
-            font-style: italic;
-            text-align: center;
-            color: {color_guinda};
-        }}
-        .gea-title {{
-            margin-bottom: 0;
-        }}
-        .gea-subtitle {{
-            margin-top: 0;
-        }}
-        .card {{
-            background-color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-        }}
-        .value-item {{
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-        }}
-        .value-icon {{
-            margin-right: 0.5rem;
-            font-size: 1.2em;
-        }}
-        .methodology-img {{
-            margin: 1.5rem 0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
-        .file-uploader {{
-            margin: 1rem 0;
-            padding: 1rem;
-            border: 2px dashed {color_guinda};
-            border-radius: 8px;
-            text-align: center;
-        }}
+        body {{ font-family: 'Arial', sans-serif; }}
+        .stApp {{ background-color: {color_fondo}; max-width: 900px; margin: 0 auto; }}
+        h1 {{ color: {color_guinda}; border-bottom: 2px solid {color_marrón}; padding-bottom: 8px; }}
+        h2 {{ color: {color_guinda}; font-size: 1.3em; }}
+        .footer {{ background-color: {color_guinda}; color: white; padding: 1rem; margin-top: 3rem; text-align: center; border-radius: 4px; }}
+        .logo-container {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }}
+        .logo-item {{ flex: 1; display: flex; align-items: center; }}
+        .logo-item.left {{ justify-content: flex-start; }}
+        .logo-item.right {{ justify-content: flex-end; }}
+        .title-wrapper {{ flex: 2; text-align: center; }}
+        .responsables {{ margin-top: 1rem; font-style: italic; text-align: center; color: {color_guinda}; }}
+        .gea-title {{ margin-bottom: 0; }}
+        .gea-subtitle {{ margin-top: 0; }}
+        .card {{ background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }}
+        .value-item {{ margin-bottom: 0.5rem; display: flex; align-items: center; }}
+        .value-icon {{ margin-right: 0.5rem; font-size: 1.2em; }}
+        .methodology-img {{ margin: 1.5rem 0; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
+        .file-uploader {{ margin: 1rem 0; padding: 1rem; border: 2px dashed {color_guinda}; border-radius: 8px; text-align: center; }}
     </style>
     """, unsafe_allow_html=True)
 
-    # Función mejorada para cargar imágenes
+    # Función mejorada para cargar imágenes con verificación robusta
     def load_image_with_fallback(main_path, alternative_names):
-        """Intenta cargar una imagen con varios nombres alternativos"""
+        """Versión mejorada con verificación exhaustiva y manejo de errores"""
         paths_to_try = [main_path] + alternative_names
         
         for img_path in paths_to_try:
             try:
                 if os.path.exists(img_path):
-                    return Image.open(img_path), None
-            except Exception as e:
+                    img = Image.open(img_path)
+                    img.verify()  # Verifica integridad del archivo
+                    img = Image.open(img_path)  # Necesario reabrir después de verify
+                    return img, None
+            except (IOError, SyntaxError, Exception) as e:
                 continue
                 
-        return None, f"No se encontró la imagen. Se intentó con: {', '.join(paths_to_try)}"
+        return None, f"No se encontró una imagen válida. Intentó con: {', '.join(paths_to_try)}"
 
     # Encabezado con logos
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -133,8 +67,8 @@ def main():
         try:
             logo_izq = Image.open("escudo_COLOR.jpg")
             st.image(logo_izq, width=100)
-        except:
-            st.error("No se pudo cargar el logo izquierdo")
+        except Exception as e:
+            st.error(f"No se pudo cargar el logo izquierdo: {str(e)}")
 
     with col2:
         st.markdown('<h1 class="gea-title">GEA</h1>', unsafe_allow_html=True)
@@ -144,8 +78,8 @@ def main():
         try:
             logo_der = Image.open("UTF-8IMG-20250417-WA0007.jpg")
             st.image(logo_der, width=100)
-        except:
-            st.error("No se pudo cargar el logo derecho")
+        except Exception as e:
+            st.error(f"No se pudo cargar el logo derecho: {str(e)}")
 
     st.markdown("---")
 
@@ -153,14 +87,12 @@ def main():
     with st.container():
         st.header("Identidad Institucional")
         
-        # Misión
         with st.expander("🧭 **Misión**", expanded=True):
             st.markdown("""
             > *"Investigar los factores genéticos, bioquímicos y ambientales que contribuyen al desarrollo de la aterosclerosis en la población mexicana, 
             para mejorar el diagnóstico temprano, la prevención y el tratamiento personalizado de enfermedades cardiovasculares."*
             """)
         
-        # Visión
         with st.expander("🔭 **Visión**", expanded=True):
             st.markdown("""
             > *"Ser referente científico en América Latina en el estudio de la aterosclerosis, integrando investigación genómica, 
@@ -170,9 +102,6 @@ def main():
     # Sección de Metodología con manejo robusto de imágenes
     with st.container():
         st.header("🔍 Metodología del Estudio GEA")
-        st.markdown("""
-        **Diagrama integral** que ilustra los componentes clave de nuestra investigación:
-        """)
         
         # Intento de carga de imagen con múltiples alternativas
         img, error = load_image_with_fallback(
@@ -187,20 +116,25 @@ def main():
         )
         
         if img:
-            st.image(img, 
+            try:
+                st.image(
+                    img, 
                     caption="Flujo metodológico del estudio GEA: población, análisis y componentes", 
-                    use_container_width=True,  # Parámetro actualizado aquí
-                    output_format="auto",
-                    clamp=True)
-            
-            st.markdown("""
-            **Componentes principales del estudio:**
-            - Población mexicana con evaluación integral
-            - Análisis bioquímicos y antropométricos
-            - Estudios de imagenología cardiovascular
-            - Evaluación genética con 256 marcadores
-            - Cuestionarios estandarizados de factores de riesgo
-            """)
+                    use_container_width=True,
+                    output_format="auto"
+                )
+                
+                st.markdown("""
+                **Componentes principales del estudio:**
+                - Población mexicana con evaluación integral
+                - Análisis bioquímicos y antropométricos
+                - Estudios de imagenología cardiovascular
+                - Evaluación genética con 256 marcadores
+                - Cuestionarios estandarizados de factores de riesgo
+                """)
+            except Exception as e:
+                st.error(f"Error al mostrar la imagen: {str(e)}")
+                st.warning("Por favor verifica que el archivo de imagen no esté corrupto")
         else:
             st.warning(error)
             
@@ -210,17 +144,14 @@ def main():
             st.markdown('</div>', unsafe_allow_html=True)
             
             if uploaded_file:
-                st.success("¡Imagen cargada correctamente!")
-                img = Image.open(uploaded_file)
-                st.image(img, use_container_width=True)  # Parámetro actualizado aquí
-            else:
-                # Mostrar archivos disponibles para diagnóstico
-                st.info("**Archivos disponibles en el directorio actual:**")
-                current_dir = Path(".").glob("*")
-                file_list = "\n".join([f"- {f.name}" for f in current_dir if f.is_file()])
-                st.markdown(file_list)
+                try:
+                    img = Image.open(uploaded_file)
+                    st.image(img, use_container_width=True)
+                    st.success("¡Imagen cargada correctamente!")
+                except Exception as e:
+                    st.error(f"Error al procesar la imagen subida: {str(e)}")
 
-    # Valores y Servicios en dos columnas
+    # Valores y Servicios
     col_valores, col_servicios = st.columns(2)
     
     with col_valores:
@@ -282,7 +213,7 @@ def main():
         
         datos_gea = pd.DataFrame({
             'Área': ['Artículos científicos', 'Tesis', 'Congresos', 'Financiamientos'],
-            'Total': [100, 25, 10, 8]
+            'Total': [124, 15, 6, 5]
         })
         
         fig = px.bar(datos_gea, x='Área', y='Total',
