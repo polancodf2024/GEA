@@ -1,8 +1,9 @@
-streamlit
 toml
-Pillow
 paramiko
 scp
-python-dotenv
-plotly
 streamlit-option-menu>=0.3.0
+streamlit==1.32.2
+pandas==2.1.4
+plotly==5.18.0
+Pillow==10.1.0
+python-dotenv==1.0.0
