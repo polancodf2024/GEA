@@ -7,23 +7,18 @@ def main():
     st.set_page_config(
         page_title="GEA - Genética de la Enfermedad Aterosclerótica",
         layout="centered",
-        page_icon="❤️"
+        page_icon="🧬"
     )
 
     # Paleta de colores oficiales
     color_guinda = "#6a0f1a"
     color_marrón = "#8B4513"
-    color_verde_pardo = "#6B8E23"  # Verde pardo/oliva
+    color_verde_pardo = "#6B8E23"
     color_fondo = "#f9f5f5"
 
     # CSS personalizado minimalista
     st.markdown(f"""
     <style>
-        /* Eliminar el cero en la esquina superior izquierda */
-        .stApp > header > div > div > div > div > div > small {{
-            display: none;
-        }}
-        
         body {{
             font-family: 'Arial', sans-serif;
         }}
@@ -57,63 +52,121 @@ def main():
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             border-left: 4px solid {color_marrón};
         }}
-        .proyecto-header {{
+        .mission-icon {{
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
             color: {color_guinda};
-            font-weight: bold;
-            margin-bottom: 0.5rem;
         }}
-        .proyecto-item {{
-            margin-bottom: 0.5rem;
+        .value-item {{
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+        }}
+        .value-icon {{
+            margin-right: 0.8rem;
+            color: {color_marrón};
         }}
     </style>
     """, unsafe_allow_html=True)
 
-    # Logo y encabezado minimalista
+    # Logo y encabezado
     col1, col2 = st.columns([1, 3])
     with col1:
         st.image("escudo_COLOR.jpg", width=100)
     with col2:
-        st.title("OASIS")
-        st.caption("Observatorio de Avances en Genética de la Enfermedad Aterosclerótica")
+        st.title("GEA")
+        st.caption("Estudio Genética de la Enfermedad Aterosclerótica")
 
     st.markdown("---")
 
-    # Contenido principal minimalista
+    # Sección de Identidad Institucional
     with st.container():
-        st.markdown("""
-        **Investigación clínica** enfocada en el avance del conocimiento genético cardiovascular 
-        mediante metodologías innovadoras y colaboración multidisciplinaria.
-        """)
-
-    # Tarjetas de información esencial
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Líneas Estratégicas")
-        st.markdown("""
-        - Epidemiología cardiovascular avanzada
-        - Ensayos clínicos traslacionales
-        - Desarrollo de guías basadas en evidencia
-        - Formación de investigadores clínicos
-        """)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.header("Identidad Institucional")
         
-        # Proyecto GEA con histograma
-        st.markdown('<p class="proyecto-header">📊 Proyecto GEA en cifras</p>', unsafe_allow_html=True)
+        # Misión
+        with st.expander("🧭 **Misión**", expanded=True):
+            st.markdown("""
+            > *"Investigar los factores genéticos, bioquímicos y ambientales que contribuyen al desarrollo de la aterosclerosis en la población mexicana, 
+            para mejorar el diagnóstico temprano, la prevención y el tratamiento personalizado de enfermedades cardiovasculares."*
+            """)
+        
+        # Visión
+        with st.expander("🔭 **Visión**", expanded=True):
+            st.markdown("""
+            > *"Ser referente científico en América Latina en el estudio de la aterosclerosis, integrando investigación genómica, 
+            herramientas diagnósticas innovadoras y medicina traslacional para reducir la incidencia de enfermedades cardiovasculares."*
+            """)
+
+    # Valores y Servicios en dos columnas
+    col_valores, col_servicios = st.columns(2)
+    
+    with col_valores:
+        with st.container():
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.subheader("📜 Valores")
+            st.markdown("""
+            <div class="value-item">
+                <span class="value-icon">🔬</span>
+                <span><strong>Excelencia científica</strong>: Rigor metodológico en investigación</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">🌐</span>
+                <span><strong>Enfoque multidisciplinario</strong>: Integración de genética, bioquímica y clínica</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">❤️</span>
+                <span><strong>Impacto social</strong>: Salud cardiovascular en México</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">💡</span>
+                <span><strong>Innovación</strong>: Tecnologías genómicas avanzadas</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">⚖️</span>
+                <span><strong>Ética</strong>: Transparencia y respeto a participantes</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col_servicios:
+        with st.container():
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.subheader("🛠️ Servicios")
+            st.markdown("""
+            - **Diagnóstico avanzado**:
+              - Perfil genético cardiovascular
+              - Análisis de marcadores bioquímicos
+              - Evaluación de placa aterosclerótica
+            
+            - **Investigación clínica**:
+              - Estudios genómicos poblacionales
+              - Análisis de factores de riesgo
+            
+            - **Programas preventivos**:
+              - Estrategias personalizadas
+              - Educación en salud cardiovascular
+            
+            - **Colaboraciones**:
+              - Redes multicéntricas
+              - Formación de investigadores
+            """)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Datos del proyecto (sección original mejorada)
+    with st.container():
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📊 Proyecto GEA en cifras")
         
         # Datos para el histograma
-        datos_productos = pd.DataFrame({
-            'Tipo': ['Artículos', 'Congresos', 'Tesis', 'Financiamientos'],
-            'Cantidad': [100, 8, 29, 5]
+        datos_gea = pd.DataFrame({
+            'Área': ['Artículos científicos', 'Tesis', 'Congresos', 'Financiamientos'],
+            'Total': [124, 15, 6, 5]
         })
         
-        # Histograma con verde pardo
-        fig = px.bar(datos_productos, x='Tipo', y='Cantidad',
-                     title="Distribución de productos académicos (2020-2023)",
+        fig = px.bar(datos_gea, x='Área', y='Total',
+                     title="Datos clave del estudio (2025)",
                      color_discrete_sequence=[color_verde_pardo],
-                     text='Cantidad')
+                     text='Total')
         
         fig.update_traces(textposition='outside')
         fig.update_layout(
@@ -125,32 +178,19 @@ def main():
         )
         st.plotly_chart(fig, use_container_width=True)
         
-        # Actualización cifras GEA
         st.markdown("""
-        **Actualización cifras GEA (2025):**
-        - 42 investigadores participantes
-        - 15 instituciones colaboradoras
-        - 3 patentes en proceso
-        - $2.8M MXN en financiamiento obtenido
+        **Características únicas:**
+        - 2,740 participantes mexicanos
+        - 256 marcadores de ancestría
+        - Protocolo integrado (genética + imagenología)
         """)
-        
-        # Separador visual
-        st.markdown("---")
-        
-        # Otros proyectos - AHORA CON MEJOR FORMATO
-        st.markdown("""
-        <div class="proyecto-item">🔍 <strong>REGISTRO MEX-AMI</strong>: Caracterización del infarto agudo en población mexicana</div>
-        <div class="proyecto-item">💻 <strong>PLATAFORMA DIGITAL</strong>: Herramientas para investigación multicéntrica</div>
-        <div class="proyecto-item">📊 <strong>PROYECTO GEA</strong>: Actualización numeralia</div>
-        """, unsafe_allow_html=True)
-        
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Pie de página minimalista
+    # Pie de página
     st.markdown("---")
     st.markdown(
         f'<div class="footer">'
-        '© 2023 Dirección de Investigación | Instituto Nacional de Cardiología Ignacio Chávez'
+        '© 2025 Proyecto GEA | Instituto Nacional de Cardiología Ignacio Chávez'
         '</div>', 
         unsafe_allow_html=True
     )
