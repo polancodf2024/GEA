@@ -139,6 +139,20 @@ Tipo: Interno/Externo"""
             return contenido
     return None
 
+# Pantalla de autenticación
+def autenticar(config):
+    st.title("🔒 Acceso al Sistema de Captura GEA")
+    password = st.text_input("Ingrese la contraseña:", type="password")
+    
+    if st.button("Acceder"):
+        if password == config['remote_password']:
+            st.session_state.autenticado = True
+            st.rerun()
+        else:
+            st.error("Contraseña incorrecta")
+            return False
+    return False
+
 # Configuración de la página
 def main():
     st.set_page_config(
@@ -150,6 +164,14 @@ def main():
     
     # Cargar configuración
     config = cargar_configuracion()
+    
+    # Verificar autenticación
+    if not hasattr(st.session_state, 'autenticado'):
+        st.session_state.autenticado = False
+    
+    if not st.session_state.autenticado:
+        autenticar(config)
+        return
     
     # Sidebar
     with st.sidebar:
@@ -173,8 +195,8 @@ def main():
         st.info("Ingrese la referencia completa en el formato sugerido")
         
         if st.button("🚪 Salir"):
-            st.success("✅ La aplicación puede cerrarse ahora")
-            st.stop()
+            st.session_state.autenticado = False
+            st.rerun()
     
     tipo_map = {
         "📄 Artículo": "art",
@@ -195,4 +217,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
